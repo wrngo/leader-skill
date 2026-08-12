@@ -3,7 +3,13 @@
 > 加新 CLI 只需在本文件加一行表格 + 一段「调用模板」+ 一段「已知坑」，SKILL.md 不用改（完整流程见文末「如何接入新 CLI」）。
 > 每加一个新工种，**必须先做冒烟测试**（让它在一个空目录建一个文件），亲眼看到文件真的出现才算接入成功。
 
-> 🔧 **使用前必读（配置）**：下面表格和调用模板里的 CLI 命令、模型名（`cursor-grok-4.5-high` / `gpt-5.6-sol` / `kimi-code/k3`）都是**示例默认值**，换成你自己账号里实际安装、实际可用的。没装的工种直接把对应行删掉或标注「未安装」，派活时跳过它。
+> 🔧 **使用前必读（配置）**：下面表格和调用模板里的 CLI 命令、模型名（`cursor-grok-4.5-high` / `gpt-5.6-sol` / `kimi-code/k3`）都是**示例默认值**，换成你自己账号里实际安装、实际可用的。没装的工种直接把对应行删掉或标注「未安装」，派活时跳过它。报"未知模型 / unknown model"就是这里没对上——去查该 CLI 的可用模型列表再改，别硬试。
+
+## 零、先认自己（工头开工前必做）
+
+1. **我是谁**：正在读这份表的那个 CLI 就是工头。默认 Claude，但换成 Codex / Kimi / opencode 等照样成立——把下表「工头」那一行理解成"我自己"。
+2. **我站在什么系统上**：macOS / Linux → 用下面每个模板的 **bash 栏**；Windows → 用 **PowerShell 栏**（**不需要 WSL**）。
+3. **一个外部工人都没有**：走「二、调用模板」最后的**光杆司令模板**——我叫一个一次性的自己进样板间干活，验收流程一字不改。
 
 ## 一、能力/成本表
 
@@ -12,9 +18,10 @@
 | **Grok**（Cursor CLI，Grok 4.5 High） | `cursor-agent` | Cursor 包月，额度通常充足 → 优先消耗 | 重复体力活：批量改名/替换、按现成模式补样板代码、补单测、写死板文档、格式整理、机械迁移；**已定位到具体行的小 bug 修补**；**搜索 / 调研 / 竞品与资料搜集**；bug 跨工种轮转的第二棒 | 需要拿主意的设计、跨模块架构、含糊需求 |
 | **Codex**（`codex exec`，OpenAI 订阅） | `codex` | 订阅制，额度有限 → 省着用在硬活 | 前端/后端功能开发、UI 交互实现（**先图后码**，见下）、要做设计取舍的模块、多文件协同改动；**功能回归 / 交互类 bug 的第一棒** | 一眼能干完的体力活（浪费额度）；纯资料搜集（交给 Grok） |
 | **Kimi**（`kimi` CLI，K3 Max） | `kimi` | 额度较少 → 只偶尔用一次，只派不太复杂的活 | 单个明确的小任务：一个文件内的小修补、独立小工具/小脚本、能一次说清楚的孤立活 | 多文件协同、需要跨轮返工磨的活（额度撑不住反复打回）、任何拿不准一次能不能过的任务 |
-| **Claude**（默认工头 = 我自己） | —（当工人时用 `claude -p`，见调用模板） | 老板的注意力 = 最稀缺资源 | 扫盘+拆活排期、写任务书、**验收审查**、bug 病根诊断、跨工种两轮仍啃不动的接手、疑难杂症亲手修、合并与收尾 | 大段体力实现（我做完就没精力验收了） |
+| **工头**（= 正在读这份表的 AI，默认 Claude） | —（当工人时用自己的一次性模式，见调用模板） | 老板的注意力 = 最稀缺资源 | 扫盘+拆活排期、写任务书、**验收审查**、bug 病根诊断、跨工种两轮仍啃不动的接手、疑难杂症亲手修、合并与收尾 | 大段体力实现（我做完就没精力验收了） |
 
-> **如果工头不是 Claude**（见 README「换其他 CLI 当工头」）：Claude 降格为「疑难杂症专家」工人，用「二、调用模板」里的 `claude -p` 模板派活——bug 病根诊断、方案取舍、其他工种啃不动的硬骨头升级给它。上表 Claude 行的工头职责（拆活/验收/合并）由新工头接管，SKILL.md 手册照常生效，手册里的「我」就是读它的那个工头。
+> **换谁当工头都成立**（见 README「换工头」）：手册里的「我」就是读它的那个 AI，工头职责（拆活/验收/合并）跟着人走。被换下来的那家降格为工人——Claude 降下来时定位是「疑难杂症专家」（病根诊断、方案取舍、别人啃不动的硬骨头），用下面的 `claude -p` 模板派。
+> **谁当工头，谁就自带光杆司令能力**：这些 CLI 全都有一次性非交互模式，所以工头永远至少有一个工人可用——它自己。
 
 **分派口诀**：
 - 能写清"改哪个文件哪一行、改成什么样"的 → Grok；
@@ -30,13 +37,36 @@
 
 ## 二、调用模板
 
+**每个模板不管什么系统，都必须做到这五件事**（记住这五件事，比记住某一行命令重要）：
+① 真的进到样板间目录里；② 用该 CLI 的一次性非交互模式；③ 把任务书喂给它；④ 输出落盘到 scratchpad；⑤ 报出成没成（退出码）。
+
+**方言对照（bash → PowerShell）**：
+
+| 要做的事 | macOS / Linux | Windows PowerShell |
+|---|---|---|
+| 进目录 | `cd "$WT"` | `Set-Location $WT` |
+| 把任务书喂进去 | `cmd < file` | `Get-Content -Raw file \| cmd`（PowerShell **没有** `<` 这个写法） |
+| 把任务书当参数传 | `"$(cat file)"` | `(Get-Content -Raw file)` |
+| 输出连错误一起落盘 | `> out.txt 2>&1` | `> out.txt 2>&1`（一样） |
+| 看成没成 | `echo "exit=$?"` | `echo "exit=$LASTEXITCODE"` |
+| 限时 | ❌ 别用 `timeout` | ❌ 更别用（Windows 上同名命令是"干等"） |
+
 ### Grok（cursor-agent）
 ```bash
+# macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去，别只靠 --workspace
 cursor-agent -p --model cursor-grok-4.5-high --force \
   --output-format text < "<scratchpad>/task-<slug>.md" \
   > "<scratchpad>/grok-<slug>.out.txt" 2>&1
 echo "exit=$?"
+```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+Get-Content -Raw "<scratchpad>/task-<slug>.md" |
+  cursor-agent -p --model cursor-grok-4.5-high --force --output-format text `
+  > "<scratchpad>/grok-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
 ```
 - `-p` = 非交互打印模式；`--force` = 不弹权限询问（因为已锁在 worktree 里）。
 - 想审计它到底动了哪些工具：把 `--output-format text` 换成 `stream-json`，输出里每个 `tool_call` 都能看到实际路径和写入内容。
@@ -44,10 +74,18 @@ echo "exit=$?"
 
 ### Kimi（kimi CLI）
 ```bash
+# macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去
 kimi -p "$(cat "<scratchpad>/task-<slug>.md")" -m kimi-code/k3 \
   --output-format text > "<scratchpad>/kimi-<slug>.out.txt" 2>&1
 echo "exit=$?"
+```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+kimi -p (Get-Content -Raw "<scratchpad>/task-<slug>.md") -m kimi-code/k3 `
+  --output-format text > "<scratchpad>/kimi-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
 ```
 - 如果 `kimi` 不在 PATH 里，换成实际安装路径。
 - `-p`（prompt 一次性模式）下**不能**加 `-y`/`--auto`（会直接报错 "Cannot combine --prompt with --auto/--yolo"）——但实测 `-p` 模式本身就是非交互免审批的，不用额外挂旗子。
@@ -57,6 +95,7 @@ echo "exit=$?"
 
 ### Codex（codex exec）
 ```bash
+# macOS / Linux
 # 用 nvm 管理 node 的话，先切到装了 codex 的版本；不用 nvm 可跳过这两行
 source ~/.nvm/nvm.sh; nvm use <你的node版本> >/dev/null; hash -r
 # 功能开发默认 sol；任务卡可覆盖（例如探索用 terra：-m gpt-5.6-terra）
@@ -65,21 +104,53 @@ codex exec -C "$WT" -s workspace-write -m gpt-5.6-sol \
   - < "<scratchpad>/task-<slug>.md"
 echo "exit=$?"
 ```
+```powershell
+# Windows PowerShell（不需要那两行 nvm；Windows 版 node/nvm 各装各的）
+Get-Content -Raw "<scratchpad>/task-<slug>.md" |
+  codex exec -C $WT -s workspace-write -m gpt-5.6-sol `
+  -o "<scratchpad>/codex-<slug>.last.txt" -
+echo "exit=$LASTEXITCODE"
+```
+- ⚠️ **Windows 上系统级沙箱可能不生效**（`-s workspace-write` 这类开关各平台实现不同）。真正兜底的是样板间隔离 + 任务书里的禁令，所以 Windows 上那几条禁令必须写足，验收也别偷懒。
 - **模型偏好**：功能开发优先 `gpt-5.6-sol`（体感一次到位率更高）。codex 全局默认模型可能和你想派的不一致——**派活必须用 `-m` 显式指定**，别只靠全局默认。任务卡若指定其他模型，以任务卡为准。
 - **内置生图（CLI 也有，不是只有桌面版）**：工具名 `image_generation`。适用：UI/页面布局草图、缺省占位图、视觉方向探索。任务书须写死落盘路径（优先样板间内如 `docs/ui-design/<slug>-sketch.png`）；验收 = 路径存在 + 读图确认内容对题。🔴 勿用 codex 全局生图目录盲 `find | tail` 当"刚生成的那张"。
 - **UI 工序**：生图草图 → 过目 →（位置类再出 HTML 示意稿等老板确认）→ 再开写码轮；细节见 SKILL「2b」。
 
-### Claude（claude -p）— 仅当其他 CLI 做工头时
+### Claude（claude -p）— 当 Claude 是工人时（别人做工头，或光杆司令自己叫自己）
 ```bash
+# macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去
 claude -p "$(cat '<scratchpad>/task-<slug>.md')" \
   --output-format text > "<scratchpad>/claude-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+claude -p (Get-Content -Raw "<scratchpad>/task-<slug>.md") `
+  --output-format text > "<scratchpad>/claude-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
+```
 - `-p` = 非交互打印模式。写文件等操作按本机 Claude Code 的权限设置走，需要时在允许的范围内放行（它已锁在 worktree 里）。
-- **定位是「疑难杂症专家」，不是体力工**：bug 病根诊断、方案取舍、其他工种两轮啃不动的硬骨头才升级给它——它的额度/注意力最贵。
+- **别人做工头时**：Claude 定位是「疑难杂症专家」，不是体力工——bug 病根诊断、方案取舍、其他工种两轮啃不动的硬骨头才升级给它。
 - **打回重做**：`claude -c -p "<补充要求>"`（续当前目录上一轮会话）。
 - 冒烟测试（空目录建文件）通过后才算上岗，同其他工种。
+
+### 🧍 光杆司令模板（没有任何外部工人时，工头叫一个"一次性的自己"）
+
+**通用做法**（不管工头是哪家）：找到本 CLI 的一次性非交互模式，照上面「五件事」拼一条命令，工人 = 我自己，验收 = 我自己在门外照常审。
+
+| 工头是 | 叫自己当工人的写法 |
+|---|---|
+| Claude Code | 上面的 `claude -p` 模板 |
+| Codex | 上面的 `codex exec` 模板 |
+| Kimi | 上面的 `kimi -p` 模板 |
+| Cursor CLI | 上面的 `cursor-agent -p` 模板 |
+| 其他（opencode 等） | **现场自证**：跑 `--help` 找它的一次性模式（常见是 `run` / `-p` / `--print` / `exec`），按五件事拼好，**跑一次冒烟测试**通过才用 |
+
+**光杆模式下必须守住的两条**（否则这个模式就是自欺欺人）：
+- 🔴 **验收一点不放水**：还是开样板间、还是只认 `git diff` + 真跑测试 + 真实运行。"是我自己写的所以我知道对"是最典型的翻车理由。
+- 🔴 **同品牌自审有共同盲区**：bug 卡"换个工种再修一轮"这招在光杆模式下**失效**。同一张 bug 卡自己打回两轮仍不过 → 停下来告诉老板"建议装第二家 CLI 换个脑子"，别无限循环烧额度。
 
 ## 三、已知坑（实测）
 
@@ -94,6 +165,14 @@ echo "exit=$?"
 - 🔴 绝不让它碰 git（它会自作主张做分支手术），见 SKILL 铁律。
 - 🔴 不带 `-m` 时吃全局默认模型，和「功能开发用 sol」的体感偏好不一致——模板已强制 `-m`。
 - 🔴 生图验收别信汇报路径；全局生图目录批次多，盲取最新一张容易张冠李戴。
+
+**Windows（未在真机实测，按平台差异写死，踩到请补充）：**
+- 🔴 **PowerShell 没有 `< file` 这种喂输入的写法**，照抄 bash 模板会直接报错——用 `Get-Content -Raw file | cmd`。
+- 🔴 **`timeout` 在 Windows 上是"干等 N 秒"，不是"限时杀掉"**——写了不但不限时，还会白等。要限时一律后台跑 + 轮询。
+- 看退出码用 `$LASTEXITCODE`，不是 `$?`（PowerShell 里 `$?` 只是 true/false）。
+- 查命令装没装用 `Get-Command`，不是 `which`。
+- 系统级沙箱开关可能不生效，隔离靠样板间 + 任务书禁令（见 Codex 模板下的提醒）。
+- **每个工种在 Windows 上到底有没有原生版，由到岗检查现场判定**，别预设——没有就标「未安装」跳过，实在一个都没有就走光杆司令模式。
 
 **Kimi：**
 - 跟 Grok/Codex 一样，会读到规则文件、开口用昵称称呼你——**语气懂事不代表可信**，一样要靠 `git diff` + 实跑验收，别被这层"人味"降低警惕。
@@ -134,7 +213,8 @@ echo "exit=$?"
 
 1. **确认可非交互调用**：先查该 CLI 是否已安装、已登录（`which xx` / `xx --version` / 跑 `--help`），找到它的一次性非交互模式（如 `-p` / `exec` / `--print`）。没装或要登录 → 停下，告诉老板先装/先登录，给出官方安装命令，不要擅自全局安装。
 2. **补工种表**：按「一、能力/成本表」的格式加一行。**「派什么 / 不派什么」先问老板对这个 CLI 的定位**（体力活？硬活？备用？），再结合它的模型特点填，别自己拍脑袋。
-3. **写调用模板**：仿照「二、调用模板」写一段，必须包含：`cd "$WT"`、非交互参数、任务书 stdin/参数传入方式、输出落盘到 scratchpad、`echo "exit=$?"`、打回重做怎么续（continue/resume 类参数）。模型名让老板定或用 CLI 默认，写进模板注释。
+3. **写调用模板**：仿照「二、调用模板」写一段，照「五件事」逐条落实：进目录、非交互参数、任务书怎么喂进去、输出落盘到 scratchpad、报退出码，外加"打回重做怎么续"（continue/resume 类参数）。**老板在 Windows 上就写 PowerShell 版**（照方言对照表转）。模型名让老板定或用 CLI 默认，写进模板注释。
+   - 顺手记一条：**这家 CLI 当工头时怎么叫自己当工人**（就是它的一次性模式那条命令）——光杆司令模式要用。
 4. **冒烟测试（必做，不许省）**：开一个临时空目录，让它建一个文件（如 `hello.txt`），然后**亲眼确认文件真实存在且内容正确**（不是信它汇报）。通过才算接入成功，把测试日期和结果记进它的「已知坑」小节。
 5. **记已知坑**：接入过程中踩到的任何坑（参数冲突、路径问题、网络表现），当场记进「三、已知坑」。
 6. **汇报上岗**：一句话告诉老板新工种叫什么、派什么活、冒烟结果。
