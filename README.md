@@ -33,7 +33,7 @@ git clone https://github.com/wrngo/leader-skill "$env:USERPROFILE\.claude\skills
 
 对 AI 说：**「检查包工队到岗情况」**
 
-它会**自动把你这台机器扫一遍**，看有多少 AI 命令行能拉来当工人——不是只照一份写死的名单喊人，而是四路并行：
+它会**跑一遍仓库里的扫描脚本**（`scan-crew.sh` / `scan-crew.ps1`），把你这台机器翻一遍，看有多少 AI 命令行能拉来当工人——不是只照一份写死的名单喊人，而是四路并行：
 
 1. 按一份 40 来家的常见名单点名（Claude / Codex / Gemini / Copilot / Grok / Cursor / Trae / Qoder / Kimi / 通义 / opencode / aider …）
 2. 把你机器上所有能敲的命令翻一遍，捞出带 AI 味的生面孔
@@ -144,6 +144,7 @@ git clone https://github.com/wrngo/leader-skill "$env:USERPROFILE\.claude\skills
 
 - `SKILL.md` — 铁律 + 完整流程（认岗 → 扫盘 → 派活 → 验收 → 返工 → 合并 → 交房）
 - `crew.md` — 工种表：谁擅长什么、怎么调用（含 Windows 版）、已知坑、实战记录、新 CLI 接入协议
+- `scan-crew.sh` / `scan-crew.ps1` — 扫本机有哪些 AI 命令行能当工人（只读，不联网、不花额度、不改文件）
 
 ## 核心机制速览
 

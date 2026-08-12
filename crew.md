@@ -13,7 +13,18 @@
 
 ## 零点五、扫本机有哪些人能用（到岗检查第一步，SKILL 流程 0 调用）
 
-目标：**别只照花名册喊人**——新 CLI 天天出，写死的名单必然漏。四条路一起走，前三条**不花钱、不联网**。
+目标：**别只照花名册喊人**——新 CLI 天天出，写死的名单必然漏。四条路一起走，全程**不花钱、不联网、不改任何文件**。
+
+### 首选：直接跑现成脚本（别每次现场手拼命令）
+
+```bash
+bash ~/.claude/skills/leader/scan-crew.sh          # macOS / Linux
+```
+```powershell
+powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\skills\leader\scan-crew.ps1"   # Windows
+```
+
+脚本一次跑完下面四路并直接输出分档结果。**下面的手写命令是脚本跑不起来时的备份**（或者需要临时改花样时照着改）。
 
 ### 路① 点名（快，认熟脸）
 
