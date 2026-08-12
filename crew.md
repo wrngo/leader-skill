@@ -11,6 +11,95 @@
 2. **我站在什么系统上**：macOS / Linux → 用下面每个模板的 **bash 栏**；Windows → 用 **PowerShell 栏**（**不需要 WSL**）。
 3. **一个外部工人都没有**：走「二、调用模板」最后的**光杆司令模板**——我叫一个一次性的自己进样板间干活，验收流程一字不改。
 
+## 零点五、扫本机有哪些人能用（到岗检查第一步，SKILL 流程 0 调用）
+
+目标：**别只照花名册喊人**——新 CLI 天天出，写死的名单必然漏。四条路一起走，前三条**不花钱、不联网**。
+
+### 路① 点名（快，认熟脸）
+
+```bash
+# macOS / Linux
+for c in claude codex gemini copilot grok cursor-agent windsurf amp goose crush \
+         opencode aider cline roo continue openhands devin warp auggie droid \
+         plandex interpreter sgpt llm ollama qodo \
+         trae qoder lingma qwen kimi codegeex codebuddy comate iflow deepseek minimax codearts; do
+  p=$(command -v "$c" 2>/dev/null); case "$p" in /*) echo "HIT $c -> $p";; esac
+done
+```
+> 🔴 必须用 `case "$p" in /*)` 只认绝对路径：`continue` / `test` 这类名字是 shell 自带关键字，`command -v` 会返回它本身，不加这层过滤就会误报"装了 Continue"。（本机实测踩到过。）
+```powershell
+# Windows PowerShell
+@('claude','codex','gemini','copilot','grok','cursor-agent','windsurf','amp','goose','crush',
+  'opencode','aider','cline','roo','continue','openhands','devin','warp','auggie','droid',
+  'plandex','interpreter','sgpt','llm','ollama','qodo',
+  'trae','qoder','lingma','qwen','kimi','codegeex','codebuddy','comate','iflow','deepseek','minimax','codearts') |
+ForEach-Object { $p=(Get-Command $_ -CommandType Application -ErrorAction SilentlyContinue).Source; if ($p) { "HIT $_ -> $p" } }
+# 加 -CommandType Application：只认真实可执行文件，排掉内置关键字/函数造成的误报
+```
+> 名单是**加速器不是依据**，喊错免费（没人应而已）。发现名单缺了谁，当场补进这段。
+
+### 路② 翻抽屉（慢，认生面孔）
+
+把 PATH 里所有能敲的命令名全列出来，挑带 AI 味的：
+
+```bash
+# macOS / Linux
+echo "$PATH" | tr ':' '\n' | while read -r d; do [ -d "$d" ] && ls -1 "$d" 2>/dev/null; done \
+ | sort -u | grep -Ei 'ai|gpt|llm|agent|cod(e|er)|chat|bot|claude|gemini|grok|qwen|kimi|copilot|cursor|trae|qoder'
+# 用 nvm 的还要扫各个 node 版本（工具常只装在某一个版本下）
+ls -1 ~/.nvm/versions/node/*/bin 2>/dev/null | sort -u
+```
+```powershell
+# Windows PowerShell
+Get-Command -CommandType Application,ExternalScript |
+  Select-Object -ExpandProperty Name | Sort-Object -Unique |
+  Select-String -Pattern 'ai|gpt|llm|agent|cod(e|er)|chat|bot|claude|gemini|grok|qwen|kimi|copilot|cursor|trae|qoder'
+```
+> ⚠️ 这一路**噪音大**（`decode`、`aircrack` 之类会命中）。只列不跑，由我肉眼过一遍再决定谁值得问。
+
+### 路③ 翻安装记录（补上"命令名猜不到"的漏网）
+
+```bash
+# macOS / Linux — 有哪个跑哪个，报错忽略
+npm ls -g --depth=0 2>/dev/null; pnpm ls -g --depth=0 2>/dev/null; bun pm ls -g 2>/dev/null
+pipx list 2>/dev/null; uv tool list 2>/dev/null; cargo install --list 2>/dev/null
+brew list --formula 2>/dev/null
+```
+```powershell
+# Windows PowerShell
+npm ls -g --depth=0; pipx list; winget list; scoop list; choco list --local-only
+```
+> 包名里带 AI 味但命令名对不上的，从这里能看见。
+
+### 路④ 翻小名（老板自己起的别名）
+
+```bash
+alias 2>/dev/null; grep -hE '^\s*alias ' ~/.zshrc ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null
+```
+```powershell
+Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-Alias|function ' }
+```
+
+### 资格认定（不花钱，决定它配不配当工人）
+
+对每个命中的候选跑 `--version` 和 `--help`，**只看一件事：有没有"给一段活、干完就退出"的一次性模式**（常见标志：`-p` / `--print` / `--prompt` / `exec` / `run` / `--non-interactive` / `--headless` / `-q`）。
+- **没有这个模式 → 直接淘汰**（交互式聊天工具当不了工人，别硬塞）。
+- 有 → 进候选名单，把那个参数记下来，后面照「二、调用模板」的五件事拼命令。
+
+### 出三档名单 + 记账
+
+汇报给老板时**必须分三档**，别混成一堆：
+
+| 档 | 含义 | 下一步 |
+|---|---|---|
+| ✅ 已上岗 | 装了 + 登录了 + 冒烟通过 | 直接派活 |
+| ⚠️ 装了没登录 / 没额度 | 命令在，但试跑报未登录 | 告诉老板"登录一下就能用"，先标注跳过 |
+| ❓ 疑似候选 | 名字/包名像，也有一次性模式，但没试过 | **只列不跑**，问老板要不要试工 |
+
+- 🔴 **试工（冒烟测试）要花一点额度，必须老板点头才做**：空目录建一个文件 → 亲眼确认文件真实存在且内容正确 → 才算录用。
+- 录用后按「六、如何接入新 CLI」把它写进本文件（工种行 + 调用模板 + 已知坑），下次直接能派。
+- **漏网是常态**：装在非常规位置、要先切环境才出现（如某些工具只在某个 node 版本下）、或纯图形界面无命令行的，扫不到。汇报时主动加一句"你要是还装了别的，报个名字我直接加"。
+
 ## 一、能力/成本表
 
 | 工种 | 命令 | 计费参考 | 派什么 | 不派什么 |
