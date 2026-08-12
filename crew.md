@@ -106,6 +106,8 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 |---|---|---|---|---|
 | **Grok**（Cursor CLI，Grok 4.5 High） | `cursor-agent` | Cursor 包月，额度通常充足 → 优先消耗 | 重复体力活：批量改名/替换、按现成模式补样板代码、补单测、写死板文档、格式整理、机械迁移；**已定位到具体行的小 bug 修补**；**搜索 / 调研 / 竞品与资料搜集**；bug 跨工种轮转的第二棒 | 需要拿主意的设计、跨模块架构、含糊需求 |
 | **Codex**（`codex exec`，OpenAI 订阅） | `codex` | 订阅制，额度有限 → 省着用在硬活 | 前端/后端功能开发、UI 交互实现（**先图后码**，见下）、要做设计取舍的模块、多文件协同改动；**功能回归 / 交互类 bug 的第一棒** | 一眼能干完的体力活（浪费额度）；纯资料搜集（交给 Grok） |
+| **Grok CLI**（xAI 官方，`grok`） | `grok` | 按 xAI 账号计费 | 与 Cursor-Grok 同类的体力活/调研；Cursor 额度用光时的替补 | ⚠️ **和 Cursor-Grok 是同一颗脑子**（都是 Grok），bug 卡"换工种"轮转时**这两家互换不算换脑子**，要换就换到别的品牌 |
+| **opencode**（`opencode`） | `opencode` | 取决于你在它里面配的模型 | 灵活替补：它是个壳，背后接哪家模型由你配；光杆司令模式的候补工人 | 需要稳定手感的关键活（背后模型可变，表现随配置漂移） |
 | **Kimi**（`kimi` CLI，K3 Max） | `kimi` | 额度较少 → 只偶尔用一次，只派不太复杂的活 | 单个明确的小任务：一个文件内的小修补、独立小工具/小脚本、能一次说清楚的孤立活 | 多文件协同、需要跨轮返工磨的活（额度撑不住反复打回）、任何拿不准一次能不能过的任务 |
 | **工头**（= 正在读这份表的 AI，默认 Claude） | —（当工人时用自己的一次性模式，见调用模板） | 老板的注意力 = 最稀缺资源 | 扫盘+拆活排期、写任务书、**验收审查**、bug 病根诊断、跨工种两轮仍啃不动的接手、疑难杂症亲手修、合并与收尾 | 大段体力实现（我做完就没精力验收了） |
 
@@ -182,6 +184,44 @@ echo "exit=$LASTEXITCODE"
 - **额度不多，只偶尔派一次**：优先派"一次能说清楚、不需要来回打回"的孤立小活；一旦感觉这活可能要返工，改派 Grok/Codex 或我自己上，别拿稀缺额度去赌。
 - **打回重做**：`kimi -S <session_id> -p "<补充要求>"`（session id 在跑完的输出里）。
 
+### Grok CLI（xAI 官方 `grok`）— 冒烟通过 2026-08-12
+```bash
+# macOS / Linux
+cd "$WT"
+grok -p "$(cat '<scratchpad>/task-<slug>.md')" --always-approve \
+  > "<scratchpad>/grokcli-<slug>.out.txt" 2>&1
+echo "exit=$?"
+```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+grok -p (Get-Content -Raw "<scratchpad>/task-<slug>.md") --always-approve `
+  > "<scratchpad>/grokcli-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
+```
+- `-p/--single` = 单轮提问，打完就退出；`--always-approve` = 不逐次弹权限（已锁在样板间内）。
+- 另有 `grok agent` 子命令（无 UI headless 跑），需要机读输出时配 `--output-format`。
+- **打回重做**：`grok -c -p "<补充要求>"`（续当前目录上一轮会话）。
+- 🔴 **别拿它当"换个脑子"用**：它和 Cursor-Grok 是同一家模型，bug 卡轮转要换到别的品牌才有意义。
+
+### opencode（`opencode run`）— 冒烟通过 2026-08-12
+```bash
+# macOS / Linux
+cd "$WT"
+opencode run "$(cat '<scratchpad>/task-<slug>.md')" \
+  > "<scratchpad>/opencode-<slug>.out.txt" 2>&1
+echo "exit=$?"
+```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+opencode run (Get-Content -Raw "<scratchpad>/task-<slug>.md") `
+  > "<scratchpad>/opencode-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
+```
+- 冒烟实测：`run` 一次性模式**默认就能写文件**，没弹权限。
+- 它背后接哪家模型由老板在 opencode 里配（`opencode models` 可查）——**派活前先确认当前模型是谁**，否则"表现忽好忽坏"根本没法归因。
+
 ### Codex（codex exec）
 ```bash
 # macOS / Linux
@@ -254,6 +294,13 @@ echo "exit=$LASTEXITCODE"
 - 🔴 绝不让它碰 git（它会自作主张做分支手术），见 SKILL 铁律。
 - 🔴 不带 `-m` 时吃全局默认模型，和「功能开发用 sol」的体感偏好不一致——模板已强制 `-m`。
 - 🔴 生图验收别信汇报路径；全局生图目录批次多，盲取最新一张容易张冠李戴。
+
+**Gemini CLI（`gemini`）— 装了但当前不可用：**
+- 🔴 2026-08-12 实测：能装能跑，但一开工就报 `IneligibleTierError`（个人版 Code Assist 已不再支持该客户端，官方要求迁移到 Antigravity）。**命令在 ≠ 能干活**——这正是"只查装没装不够、必须试跑"的活样本。
+- 🔴 **它失败时退出码仍是 0**（同 Grok 的网络失败坑）：只看"成没成"会误判成通过，必须看输出内容 + 目标文件是否真出现。
+
+**Grok CLI / opencode（首次冒烟共同观察，2026-08-12）：**
+- 两家都**读了工作区的规则文件**，回话时用老板的昵称、甚至照抄了"下一步"格式——**语气懂事不代表干得对**，一律以文件真实存在 + 内容正确为准（本次两家都真建了文件，通过）。
 
 **Windows（未在真机实测，按平台差异写死，踩到请补充）：**
 - 🔴 **PowerShell 没有 `< file` 这种喂输入的写法**，照抄 bash 模板会直接报错——用 `Get-Content -Raw file | cmd`。
