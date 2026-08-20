@@ -3,7 +3,7 @@
 > 加新 CLI 只需在本文件加一行表格 + 一段「调用模板」+ 一段「已知坑」，SKILL.md 不用改（完整流程见文末「如何接入新 CLI」）。
 > 每加一个新工种，**必须先做冒烟测试**（让它在一个空目录建一个文件），亲眼看到文件真的出现才算接入成功。
 
-> 🔧 **使用前必读（配置）**：下面表格和调用模板里的 CLI 命令、模型名（`cursor-grok-4.5-high` / `gpt-5.6-sol` / `kimi-code/k3`）都是**示例默认值**，换成你自己账号里实际安装、实际可用的。没装的工种直接把对应行删掉或标注「未安装」，派活时跳过它。报"未知模型 / unknown model"就是这里没对上——去查该 CLI 的可用模型列表再改，别硬试。
+> 🔧 **使用前必读（配置）**：下面表格和调用模板里的 CLI 命令、模型名（`cursor-grok-4.6-xhigh` / `gpt-5.6-sol` / `kimi-code/k3`）都是**示例默认值**，换成你自己账号里实际安装、实际可用的。没装的工种直接把对应行删掉或标注「未安装」，派活时跳过它。报"未知模型 / unknown model"就是这里没对上——去查该 CLI 的可用模型列表再改，别硬试。
 
 ## 零、先认自己（工头开工前必做）
 
@@ -17,12 +17,18 @@
 
 ### 首选：直接跑现成脚本（别每次现场手拼命令）
 
+> 📁 **路径以本 skill 实际安装目录为准**（下面的 `<leader 目录>` = 你正在读的这份 crew.md 所在的那个文件夹）。
+> Claude Code 装的话通常是 `~/.claude/skills/leader/`；换 Qoder / Codex 当工头时**不是**这个路径，别照抄——
+> 找不到就搜一下文件名：`find ~ -name scan-crew.sh 2>/dev/null` / `Get-ChildItem $env:USERPROFILE -Recurse -Filter scan-crew.ps1 -EA SilentlyContinue`。
+
 ```bash
-bash ~/.claude/skills/leader/scan-crew.sh          # macOS / Linux
+bash "<leader 目录>/scan-crew.sh"          # macOS / Linux
 ```
 ```powershell
-powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\skills\leader\scan-crew.ps1"   # Windows
+powershell -ExecutionPolicy Bypass -File "<leader 目录>\scan-crew.ps1"   # Windows
 ```
+> 🔴 **Windows 脚本必须保持「UTF-8 带 BOM」存盘**。丢了 BOM，PowerShell 5.1 会按 GBK 读，
+> 中文全乱码、字符串会被读断，导致源码被当文本打印出来（2026-08-20 实测踩到，已修）。改中文后确认 BOM 还在。
 
 脚本一次跑完下面四路并直接输出分档结果。**下面的手写命令是脚本跑不起来时的备份**（或者需要临时改花样时照着改）。
 
@@ -33,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\skills\leader
 for c in claude codex gemini copilot grok cursor-agent windsurf amp goose crush \
          opencode aider cline roo continue openhands devin warp auggie droid \
          plandex interpreter sgpt llm ollama qodo \
-         trae qoder lingma qwen kimi codegeex codebuddy comate iflow deepseek minimax codearts; do
+         trae qoder qoderclicn qodercn qoder-cn lingma qwen kimi codegeex codebuddy comate iflow deepseek minimax codearts; do
   p=$(command -v "$c" 2>/dev/null); case "$p" in /*) echo "HIT $c -> $p";; esac
 done
 ```
@@ -43,7 +49,7 @@ done
 @('claude','codex','gemini','copilot','grok','cursor-agent','windsurf','amp','goose','crush',
   'opencode','aider','cline','roo','continue','openhands','devin','warp','auggie','droid',
   'plandex','interpreter','sgpt','llm','ollama','qodo',
-  'trae','qoder','lingma','qwen','kimi','codegeex','codebuddy','comate','iflow','deepseek','minimax','codearts') |
+  'trae','qoder','qoderclicn','qodercn','qoder-cn','lingma','qwen','kimi','codegeex','codebuddy','comate','iflow','deepseek','minimax','codearts') |
 ForEach-Object { $p=(Get-Command $_ -CommandType Application -ErrorAction SilentlyContinue).Source; if ($p) { "HIT $_ -> $p" } }
 # 加 -CommandType Application：只认真实可执行文件，排掉内置关键字/函数造成的误报
 ```
@@ -115,11 +121,12 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 
 | 工种 | 命令 | 计费参考 | 派什么 | 不派什么 |
 |---|---|---|---|---|
-| **Grok**（Cursor CLI，Grok 4.5 High） | `cursor-agent` | Cursor 包月，额度通常充足 → 优先消耗 | 重复体力活：批量改名/替换、按现成模式补样板代码、补单测、写死板文档、格式整理、机械迁移；**已定位到具体行的小 bug 修补**；**搜索 / 调研 / 竞品与资料搜集**；bug 跨工种轮转的第二棒 | 需要拿主意的设计、跨模块架构、含糊需求 |
+| **Grok**（Cursor CLI，Grok 4.6 Extra High） | `cursor-agent` | Cursor 包月，额度通常充足 → 优先消耗 | 重复体力活：批量改名/替换、按现成模式补样板代码、补单测、写死板文档、格式整理、机械迁移；**已定位到具体行的小 bug 修补**；**搜索 / 调研 / 竞品与资料搜集**；bug 跨工种轮转的第二棒 | 需要拿主意的设计、跨模块架构、含糊需求 |
 | **Codex**（`codex exec`，OpenAI 订阅） | `codex` | 订阅制，额度有限 → 省着用在硬活 | 前端/后端功能开发、UI 交互实现（**先图后码**，见下）、要做设计取舍的模块、多文件协同改动；**功能回归 / 交互类 bug 的第一棒** | 一眼能干完的体力活（浪费额度）；纯资料搜集（交给 Grok） |
 | **Grok CLI**（xAI 官方，`grok`） | `grok` | 按 xAI 账号计费 | 与 Cursor-Grok 同类的体力活/调研；Cursor 额度用光时的替补 | ⚠️ **和 Cursor-Grok 是同一颗脑子**（都是 Grok），bug 卡"换工种"轮转时**这两家互换不算换脑子**，要换就换到别的品牌 |
 | **opencode**（`opencode`） | `opencode` | 取决于你在它里面配的模型 | 灵活替补：它是个壳，背后接哪家模型由你配；光杆司令模式的候补工人 | 需要稳定手感的关键活（背后模型可变，表现随配置漂移） |
 | **Kimi**（`kimi` CLI，K3 Max） | `kimi` | 额度较少 → 只偶尔用一次，只派不太复杂的活 | 单个明确的小任务：一个文件内的小修补、独立小工具/小脚本、能一次说清楚的孤立活 | 多文件协同、需要跨轮返工磨的活（额度撑不住反复打回）、任何拿不准一次能不能过的任务 |
+| **Qoder CN**（`qoderclicn`，接国产模型：Qwen / DeepSeek / GLM / Kimi / MiniMax） | `qoderclicn` | 按 Qoder 账号计费，额度另算 → Cursor/Codex 吃紧时的主力替补 | 体力活与中文语境的活：批量改名替换、补样板代码、补单测、中文文档/文案整理、机械迁移；**已定位到具体行的小修**；**bug 轮转的「第三个脑子」——它背后是国产模型，和 Grok / Codex 不同源，Codex→Grok 两轮啃不动时换它比同源互换有意义** | 跨模块架构设计、含糊需求、需要拿主意的方案取舍（这些回工头） |
 | **工头**（= 正在读这份表的 AI，默认 Claude） | —（当工人时用自己的一次性模式，见调用模板） | 老板的注意力 = 最稀缺资源 | 扫盘+拆活排期、写任务书、**验收审查**、bug 病根诊断、跨工种两轮仍啃不动的接手、疑难杂症亲手修、合并与收尾 | 大段体力实现（我做完就没精力验收了） |
 
 > **换谁当工头都成立**（见 README「换工头」）：手册里的「我」就是读它的那个 AI，工头职责（拆活/验收/合并）跟着人走。被换下来的那家降格为工人——Claude 降下来时定位是「疑难杂症专家」（病根诊断、方案取舍、别人啃不动的硬骨头），用下面的 `claude -p` 模板派。
@@ -134,7 +141,7 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 
 **Bug 分派口诀**（与 SKILL 返工铁律配套）：
 1. **已定位到具体行的小修** → Grok；
-2. **功能回归 / 交互类、能复现但病根未钉死** → 先 Codex 一轮；不过 → Grok 一轮；仍不行 → Claude；
+2. **功能回归 / 交互类、能复现但病根未钉死** → 先 Codex 一轮；不过 → Grok 一轮；仍不行 → Qoder CN 换个国产脑子一轮；还不行 → Claude；
 3. **病根不清 / 两轮已啃不动 / 方案层取舍** → Claude 自己上（可先诊断再拆小修给别人）。
 
 ## 二、调用模板
@@ -157,7 +164,7 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 ```bash
 # macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去，别只靠 --workspace
-cursor-agent -p --model cursor-grok-4.5-high --force \
+cursor-agent -p --model cursor-grok-4.6-xhigh --force \
   --output-format text < "<scratchpad>/task-<slug>.md" \
   > "<scratchpad>/grok-<slug>.out.txt" 2>&1
 echo "exit=$?"
@@ -166,7 +173,7 @@ echo "exit=$?"
 # Windows PowerShell
 Set-Location $WT
 Get-Content -Raw "<scratchpad>/task-<slug>.md" |
-  cursor-agent -p --model cursor-grok-4.5-high --force --output-format text `
+  cursor-agent -p --model cursor-grok-4.6-xhigh --force --output-format text `
   > "<scratchpad>/grok-<slug>.out.txt" 2>&1
 echo "exit=$LASTEXITCODE"
 ```
@@ -233,6 +240,31 @@ echo "exit=$LASTEXITCODE"
 - 冒烟实测：`run` 一次性模式**默认就能写文件**，没弹权限。
 - 它背后接哪家模型由老板在 opencode 里配（`opencode models` 可查）——**派活前先确认当前模型是谁**，否则"表现忽好忽坏"根本没法归因。
 
+### Qoder CN（`qoderclicn -p`）— 冒烟通过 2026-08-19
+```bash
+# macOS / Linux
+cd "$WT"                                   # 必须真的 cd 进去
+qoderclicn -p "$(cat '<scratchpad>/task-<slug>.md')" -m Qwen3.8-Max \
+  --permission-mode bypass_permissions -o text \
+  > "<scratchpad>/qoder-<slug>.out.txt" 2>&1
+echo "exit=$?"
+```
+```powershell
+# Windows PowerShell
+Set-Location $WT
+qoderclicn -p (Get-Content -Raw "<scratchpad>/task-<slug>.md") -m Qwen3.8-Max `
+  --permission-mode bypass_permissions -o text `
+  > "<scratchpad>/qoder-<slug>.out.txt" 2>&1
+echo "exit=$LASTEXITCODE"
+```
+- 它是 Claude Code 的同构 CLI，参数几乎一一对应：`-p` 非交互、`-c` 续跑、`-r <id>` 恢复、`-o/--output-format`、`--add-dir`。
+- `--permission-mode bypass_permissions` = 不逐次弹权限（已锁在样板间里）；等价的还有 `--dangerously-skip-permissions`，优先用前者。
+- **模型必须显式指定**：`--list-models` 可查当前账号可用清单（实测：`Auto` / `Qwen3.8-Max` / `Qwen3.7-Max` / `Qwen3.7-Plus` / `Qwen3.7-Flash` / `DeepSeek-V4-Pro` / `DeepSeek-V4-Flash` / `GLM-5.3` / `GLM-5.2` / `Kimi-K2.7-Code` / `MiniMax-M2.7`）。默认给体力活派 `Qwen3.8-Max`；想换脑子做 bug 轮转可派 `DeepSeek-V4-Pro`；`Auto` 会替你挑，归因困难，派活别用。
+- 还有 `--reasoning-effort <level>` 可拉档位，硬一点的活值得加。
+- **打回重做**：`qoderclicn -c -p "<补充要求>"`（续当前目录上一轮）。
+- ⚠️ 它自带 `--worktree` 开样板间的能力——**别用**，样板间一律由工头开，免得它自己另起一份、我在错的目录验收。
+- 🔴 **同样绝不让它碰 git**（同 Codex 铁律）：任务书里写死"只改文件，不 add / 不 commit / 不切分支"。
+
 ### Codex（codex exec）
 ```bash
 # macOS / Linux
@@ -261,6 +293,7 @@ echo "exit=$LASTEXITCODE"
 # macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去
 claude -p "$(cat '<scratchpad>/task-<slug>.md')" \
+  --permission-mode acceptEdits \
   --output-format text > "<scratchpad>/claude-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
@@ -268,10 +301,12 @@ echo "exit=$?"
 # Windows PowerShell
 Set-Location $WT
 claude -p (Get-Content -Raw "<scratchpad>/task-<slug>.md") `
+  --permission-mode acceptEdits `
   --output-format text > "<scratchpad>/claude-<slug>.out.txt" 2>&1
 echo "exit=$LASTEXITCODE"
 ```
-- `-p` = 非交互打印模式。写文件等操作按本机 Claude Code 的权限设置走，需要时在允许的范围内放行（它已锁在 worktree 里）。
+- `-p` = 非交互打印模式。
+- 🔴 **必须带 `--permission-mode acceptEdits`**：不带的话写文件会被权限系统拦住（提示"写入被权限拦截，需要批准"），非交互模式下没人能批，冒烟直接失败（2026-08-20 Windows 实测；加上后一次通过）。这个档位**只放开改文件、不放开跑命令**，且它已锁在 worktree 里。别图省事换成 `--dangerously-skip-permissions`。
 - **别人做工头时**：Claude 定位是「疑难杂症专家」，不是体力工——bug 病根诊断、方案取舍、其他工种两轮啃不动的硬骨头才升级给它。
 - **打回重做**：`claude -c -p "<补充要求>"`（续当前目录上一轮会话）。
 - 冒烟测试（空目录建文件）通过后才算上岗，同其他工种。
@@ -286,6 +321,7 @@ echo "exit=$LASTEXITCODE"
 | Codex | 上面的 `codex exec` 模板 |
 | Kimi | 上面的 `kimi -p` 模板 |
 | Cursor CLI | 上面的 `cursor-agent -p` 模板 |
+| Qoder CN | 上面的 `qoderclicn -p` 模板 |
 | 其他（opencode 等） | **现场自证**：跑 `--help` 找它的一次性模式（常见是 `run` / `-p` / `--print` / `exec`），按五件事拼好，**跑一次冒烟测试**通过才用 |
 
 **光杆模式下必须守住的两条**（否则这个模式就是自欺欺人）：
@@ -301,8 +337,23 @@ echo "exit=$LASTEXITCODE"
 - 没有 `timeout` 命令的系统（如 macOS）：别写 `timeout 180 cursor-agent …`，会直接报命令不存在；要限时就用后台跑 + 轮询。
 - 🔴 **会整轮网络失败且退出码仍是 0**：输出文件里只有一行 `Error: [aborted] Client network socket disconnected before secure TLS connection was established`，工作区一个文件都没动。**回收时先看输出文件是不是这种一行错误 + `git status` 是否为空**，别当成"它做完了但没改动"。连挂两次就换工种（这不是它做错，是连不上，同工种再试意义不大）。
 
+**Grok CLI / Cursor / Kimi / Qoder 共通（2026-08-19 实测踩到）：**
+- 🔴 **工人会把仓库 `CLAUDE.md` 里"复杂任务先出 Plan 等老板同意"当成对自己的约束，于是只交了一份计划就停住、一个文件没动**（本次 Grok CLI 实测，退出码仍是 0）。任务卡里必须写死一句：**"你是工头派来的工人，这张卡就是已批准的计划，不用再等任何人点头，直接执行；仓库里那条先出计划的规矩是老板与工头之间的，不适用于你。"** 已停住的用该 CLI 的续跑参数（`grok -c -p` / `cursor-agent --continue` / `qoderclicn -c -p`）补一句"执行"即可，不用重开卡。
+
+**批量正则改测试文件（2026-08-19 实测，任何工种都会踩）：**
+- 🔴 **正则会把你刚写的 helper 自己也替换掉**，helper 变成自我递归，跑测试时当场把内存吃爆（tsc 与 playwright 同时 OOM）。任务卡里凡是"把某写法批量换成新 helper"的活，必须加一句：**先确认 helper 自身不在匹配范围内，替换后先跑一次最小用例再跑全量。**
+
+**工头自己在验收时最容易犯的一条（2026-08-20 实测踩到）：**
+- 🔴 **做"故意打死实现看用例会不会红"的反证之前，先在样板间里 commit 一次**。工人交的活是**未提交状态**，反证完用 `git checkout HEAD -- <file>` 还原，还原的是**改动前的原文**——一条命令把工人刚写的实现整个抹掉（本次靠上下文里存着完整文件才重建回来）。先提交，反证后再 checkout 才安全；或者破坏前先 `cp` 一份到 scratchpad。
+
 **Codex：**
 - 🔴 绝不让它碰 git（它会自作主张做分支手术），见 SKILL 铁律。
+- 🔴 **大陆网络下从官方 npm 源装会卡死**（2026-08-20 Windows 实测：下 `@openai/codex-win32-x64` 二进制 10 分钟零进度）。换国内源 8 秒装完：
+  ```
+  npm i -g @openai/codex --registry=https://registry.npmmirror.com
+  ```
+  （同一条在 macOS / Linux 也适用，只是二进制包名不同，npm 会自己挑。）
+- 🔴 **npm 全局壳可能损坏**：实测出现过全局目录只剩 `.codex-*` 残留、`codex.cmd` 不存在，命令直接消失——不是没装也不是没登录，处置见「六、如何接入新 CLI」第 1 步的第三种状态。
 - 🔴 不带 `-m` 时吃全局默认模型，和「功能开发用 sol」的体感偏好不一致——模板已强制 `-m`。
 - 🔴 生图验收别信汇报路径；全局生图目录批次多，盲取最新一张容易张冠李戴。
 
@@ -312,6 +363,12 @@ echo "exit=$LASTEXITCODE"
 
 **Grok CLI / opencode（首次冒烟共同观察，2026-08-12）：**
 - 两家都**读了工作区的规则文件**，回话时用老板的昵称、甚至照抄了"下一步"格式——**语气懂事不代表干得对**，一律以文件真实存在 + 内容正确为准（本次两家都真建了文件，通过）。
+
+**Qoder CN（`qoderclicn`）— 冒烟通过 2026-08-19：**
+- 冒烟实测：空目录 + `-p` + `-m Qwen3.8-Max` + `bypass_permissions`，文件真实落地、内容准确、退出码 0。
+- 🔴 **命令名不叫 `qoder`**：本机实际是 `qoderclicn`（另有 `qodercn` / `qoder-cn` 两个入口指向同一套）。只按 `qoder` 点名会漏掉它——扫描名单已补齐这三个名字。
+- 🔴 **它是 Claude Code 的同构克隆**：参数长得一样不代表行为一样（模型是国产的），别把 Claude 的手感直接套上去；一律以 `git diff` + 实跑验收。
+- 多文件协同、长任务未实测过，先从小活派起。
 
 **Windows（未在真机实测，按平台差异写死，踩到请补充）：**
 - 🔴 **PowerShell 没有 `< file` 这种喂输入的写法**，照抄 bash 模板会直接报错——用 `Get-Content -Raw file | cmd`。
@@ -324,6 +381,24 @@ echo "exit=$LASTEXITCODE"
 **Kimi：**
 - 跟 Grok/Codex 一样，会读到规则文件、开口用昵称称呼你——**语气懂事不代表可信**，一样要靠 `git diff` + 实跑验收，别被这层"人味"降低警惕。
 - 冒烟测试只验过"单文件、单指令"这种最简单场景：`-p` 非交互模式下文件真实落地，内容准确，退出码 0。多文件协同活没实测过，先别派。
+
+## 三点五、Qoder CN 首次实战记录（coread F78，2026-08-19）
+
+一张中等难度的功能卡（页面加搜索 + 类型筛选、新增纯函数文件、单测 + e2e），**一次过，未返工**。
+
+- **照现成写法走，不自作聪明**：明确要求"归一化规则与 `lib/shelf.ts` 一致、UI 类名照搬书架某段"，它逐条对齐，注释风格也跟着写"为什么"而不是"做了什么"。
+- **主动报备偏差**：示意稿画的是文字按钮、任务卡要求照搬图标按钮，两者冲突时它按卡执行并**在汇报里单列这条**；另外自己加的一个"查看全部"按钮也主动标注"示意稿没画，不要可删"。给它写清"列出你拿不准的地方"很有效。
+- **没有源码字符串断言**（任务卡里明令禁止过，见 Codex 那条坑），测试是真的跑行为。
+- **红→绿反证如实**：它报的红数（单测 7 红 / e2e 2 红）与工头独立复跑完全一致。
+- **诚实度**：主动说明任务卡里引用的一个参考文件在它的样板间里不存在（工头给的是尚未合并的分支产物），改参考了另一条现成 spec——这类"上级给错信息"的反馈很值钱。
+- 结论：**中等难度功能开发可以放心派**；架构取舍类仍回工头。
+
+## 三点六、工头自己的一条教训：老板报的症状往往比真因轻（2026-08-19/20 连中两次）
+
+- 报「重进书看到上一页」→ 真因是**每重进一次就把阅读进度倒着写回服务器**（数据在退化，不只是显示错）。
+- 报「好句库不能写」→ 真因是**那一页断网连读都读不了**（拉不到列表直接 return，白板一块）。
+- **做法**：收到非技术出身的老板的反馈，默认**先往下挖一层再定方案**——先问"这个症状最坏可能意味着什么"，用真实数据/取证确认，再写任务卡。照字面症状派活，容易只修表皮、下一轮又被同一件事打回。
+- 交房报告里要**点名**这种"顺手挖出更糟一层"的发现，别让它淹没在功能条目里——那是这轮最有价值的产出。
 
 ## 四、首战实战记录（某共读 App 项目，2026-08-04）
 
@@ -358,10 +433,15 @@ echo "exit=$LASTEXITCODE"
 
 老板说「把 XX CLI 加进包工队」时，按以下步骤做，不要跳步：
 
-1. **确认可非交互调用**：先查该 CLI 是否已安装、已登录（`which xx` / `xx --version` / 跑 `--help`），找到它的一次性非交互模式（如 `-p` / `exec` / `--print`）。没装或要登录 → 停下，告诉老板先装/先登录，给出官方安装命令，不要擅自全局安装。
+1. **确认可非交互调用**：先查该 CLI 是否已安装、已登录（`which xx` / `xx --version` / 跑 `--help`），找到它的一次性非交互模式（如 `-p` / `exec` / `--print`）。结果只可能是下面三种之一，**分开处置，别混为一谈**：
+   - **没装** → 停下，告诉老板官方安装命令，不要擅自全局安装。
+   - **装了但没登录** → 停下，告诉老板去登录，别替他填任何账号密码。
+   - 🔴 **装了但命令损坏**（2026-08-20 Windows 实测踩到）：安装记录里查得到这个包，但可执行文件不见了、或一敲就报"不是内部或外部命令"（实测 codex：全局目录只剩 `.codex-*` 残留、`codex.cmd` 没了）。**症状像"没装"，但直接重装往往还会踩同一个坑**。处置：① 先确认是哪种——`npm ls -g --depth=0` / `winget list` 能看到包但命令敲不出来，就是这种；② 把残留清掉再按上面的国内源重装；③ 重装完必须重开一个终端再验 `--version`（旧终端的 PATH 缓存会骗人）；④ 修不好就当"没装"处理，先跳过它派活，别卡住整条流水线。
 2. **补工种表**：按「一、能力/成本表」的格式加一行。**「派什么 / 不派什么」先问老板对这个 CLI 的定位**（体力活？硬活？备用？），再结合它的模型特点填，别自己拍脑袋。
 3. **写调用模板**：仿照「二、调用模板」写一段，照「五件事」逐条落实：进目录、非交互参数、任务书怎么喂进去、输出落盘到 scratchpad、报退出码，外加"打回重做怎么续"（continue/resume 类参数）。**老板在 Windows 上就写 PowerShell 版**（照方言对照表转）。模型名让老板定或用 CLI 默认，写进模板注释。
    - 顺手记一条：**这家 CLI 当工头时怎么叫自己当工人**（就是它的一次性模式那条命令）——光杆司令模式要用。
-4. **冒烟测试（必做，不许省）**：开一个临时空目录，让它建一个文件（如 `hello.txt`），然后**亲眼确认文件真实存在且内容正确**（不是信它汇报）。通过才算接入成功，把测试日期和结果记进它的「已知坑」小节。
+4. **冒烟测试（必做，不许省）**：开一个临时空目录，让它建一个文件（如 `hello.txt`），然后**亲眼确认文件真实存在且内容正确**（不是信它汇报）。
+   - 🔴 **冒烟被权限拦住不等于它不行**：很多 CLI 非交互模式下写文件默认要人批准，而非交互模式里没人能批，于是"看起来失败了"。先给它加上各自的放行参数再判死刑——Claude 是 `--permission-mode acceptEdits`，Qoder 是 `--permission-mode bypass_permissions`，其他家查 `--help` 里 permission / sandbox / yes / approve 之类的词（2026-08-20 Windows 实测：Claude 就是这么从"冒烟失败"变成"一次通过"的）。
+   - 🔴 **扫描给了 🟡 的（有一次性模式但看不出会改文件，如 ollama）**：冒烟就是它的生死线——建不出文件就是模型运行时，不是 coding agent，**不录用**，在工种表里标注清楚免得下次又被扫出来。通过才算接入成功，把测试日期和结果记进它的「已知坑」小节。
 5. **记已知坑**：接入过程中踩到的任何坑（参数冲突、路径问题、网络表现），当场记进「三、已知坑」。
 6. **汇报上岗**：一句话告诉老板新工种叫什么、派什么活、冒烟结果。

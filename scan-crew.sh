@@ -11,7 +11,7 @@ set -u
 
 KNOWN="claude codex gemini copilot grok cursor-agent windsurf amp goose crush
 opencode aider cline roo openhands devin warp auggie droid plandex interpreter
-sgpt llm ollama qodo trae qoder lingma qwen kimi codegeex codebuddy comate
+sgpt llm ollama qodo trae qoder qoderclicn qodercn qoder-cn lingma qwen kimi codegeex codebuddy comate
 iflow deepseek minimax codearts"
 
 # 名字里带"AI 味"的模式（用于捞生面孔）
@@ -30,6 +30,10 @@ probe() {
 }
 
 ONESHOT='(^|[^a-z])(-p|--print|--prompt|--single|--non-?interactive|--headless)([^a-z]|$)|(^|[[:space:]])(exec|run)([[:space:]]|$)'
+# 🔴 光有 -p / run / exec 不够：ollama run MODEL 也匹配，但它只是模型运行时，不会改文件。
+#    再查一条"看得出会动文件"的证据，分出中间档，生死交给冒烟测试定。
+#    注意词边界：ollama 帮助里有 "Modelfile"，不卡边界会被 file 误收。
+CANEDIT='edit|write|patch|diff|apply|workspace|sandbox|repo(sitory)?|permission|(^|[^a-z])files?([^a-z]|$)|(^|[^a-z])(cwd|dir|directory)([^a-z]|$)'
 
 say "================ leader 包工队扫描 ================"
 say "（只读；下面第 ① 段会对已知 CLI 跑 --help，不消耗任何额度）"
@@ -44,7 +48,11 @@ for c in $KNOWN; do
   FOUND=$((FOUND + 1))
   h=$(probe "$c")
   if printf '%s' "$h" | grep -qEi "$ONESHOT"; then
-    say "  ✅ $c —— 有一次性干活模式，够格当工人"
+    if printf '%s' "$h" | grep -qEi "$CANEDIT"; then
+      say "  ✅ $c —— 有一次性干活模式，也看得出能动文件，够格当工人（仍需冒烟）"
+    else
+      say "  🟡 $c —— 有一次性干活模式，但没看出它能改文件（可能只是模型运行时，如 ollama）；冒烟时重点验"
+    fi
   else
     say "  ⚠️  $c —— 装着，但没看到一次性干活模式（可能只是聊天工具，或 --help 打不开）"
   fi
@@ -91,6 +99,7 @@ say ""
 say "================ 扫完了 ================"
 say "接下来（工头照做）："
 say "  1. ✅ 那批：跑一次冒烟测试（空目录建文件、亲眼确认）才算上岗 —— 要花一点额度，先问老板。"
+say "  1b. 🟡 那批：老板点头才试；冒烟时必须亲眼看到它建出文件，建不出就是模型运行时，不录用。"
 say "  2. ⚠️ / ? 那批：只列给老板看，别擅自动。"
 say "  3. 录用的按 crew.md「六、如何接入新 CLI」写进工种表。"
 say "  4. 提醒老板：藏在非常规位置、或要先切环境才出现的工具扫不到 —— 想起来直接报名字。"
