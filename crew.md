@@ -123,14 +123,19 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 |---|---|---|---|---|
 | **Grok**（Cursor CLI，Grok 4.6 Extra High） | `cursor-agent` | Cursor 包月，额度通常充足 → 优先消耗 | 重复体力活：批量改名/替换、按现成模式补样板代码、补单测、写死板文档、格式整理、机械迁移；**已定位到具体行的小 bug 修补**；**搜索 / 调研 / 竞品与资料搜集**；bug 跨工种轮转的第二棒 | 需要拿主意的设计、跨模块架构、含糊需求 |
 | **Codex**（`codex exec`，OpenAI 订阅） | `codex` | 订阅制，额度有限 → 省着用在硬活 | 前端/后端功能开发、UI 交互实现（**先图后码**，见下）、要做设计取舍的模块、多文件协同改动；**功能回归 / 交互类 bug 的第一棒** | 一眼能干完的体力活（浪费额度）；纯资料搜集（交给 Grok） |
-| **Grok CLI**（xAI 官方，`grok`） | `grok` | 按 xAI 账号计费 | 与 Cursor-Grok 同类的体力活/调研；Cursor 额度用光时的替补 | ⚠️ **和 Cursor-Grok 是同一颗脑子**（都是 Grok），bug 卡"换工种"轮转时**这两家互换不算换脑子**，要换就换到别的品牌 |
-| **opencode**（`opencode`） | `opencode` | 取决于你在它里面配的模型 | 灵活替补：它是个壳，背后接哪家模型由你配；光杆司令模式的候补工人 | 需要稳定手感的关键活（背后模型可变，表现随配置漂移） |
+| **Grok CLI**（xAI 官方，`grok`） | `grok` | **xAI 包月，额度充足**（Tao 2026-08-26 确认）→ 和 Cursor 一样可放心消耗，别当按量计费省着用 | 与 Cursor-Grok 同类的体力活/调研；Cursor 额度用光时的替补 | ⚠️ **和 Cursor-Grok 是同一颗脑子**（都是 Grok），bug 卡"换工种"轮转时**这两家互换不算换脑子**，要换就换到别的品牌 |
+| **opencode**（`opencode run`，固定 GLM-5.3-Flash · 推理档 max） | `opencode` | 按 opencode 账号计费，GLM-5.3-Flash 单价很低（约为主力模型的零头）→ 额度吃紧时的第一替补 | 体力活与中文语境的活：批量改名替换、补样板代码、补单测、中文文档整理、机械迁移；**已定位到具体行的小修**；**bug 轮转的换脑子人选之一**（GLM 与 Grok / Codex 不同源）；光杆司令模式的候补工人 | 跨模块架构设计、含糊需求、需要拿主意的方案取舍（这些回工头）；⚠️ **和 Qoder CN 可能是同一颗脑子**（Qoder CN 若也配成 GLM，两家互换不算换脑子） |
 | **Kimi**（`kimi` CLI，K3 Max） | `kimi` | 额度较少 → 只偶尔用一次，只派不太复杂的活 | 单个明确的小任务：一个文件内的小修补、独立小工具/小脚本、能一次说清楚的孤立活 | 多文件协同、需要跨轮返工磨的活（额度撑不住反复打回）、任何拿不准一次能不能过的任务 |
 | **Qoder CN**（`qoderclicn`，接国产模型：Qwen / DeepSeek / GLM / Kimi / MiniMax） | `qoderclicn` | 按 Qoder 账号计费，额度另算 → Cursor/Codex 吃紧时的主力替补 | 体力活与中文语境的活：批量改名替换、补样板代码、补单测、中文文档/文案整理、机械迁移；**已定位到具体行的小修**；**bug 轮转的「第三个脑子」——它背后是国产模型，和 Grok / Codex 不同源，Codex→Grok 两轮啃不动时换它比同源互换有意义** | 跨模块架构设计、含糊需求、需要拿主意的方案取舍（这些回工头） |
 | **工头**（= 正在读这份表的 AI，默认 Claude） | —（当工人时用自己的一次性模式，见调用模板） | 老板的注意力 = 最稀缺资源 | 扫盘+拆活排期、写任务书、**验收审查**、bug 病根诊断、跨工种两轮仍啃不动的接手、疑难杂症亲手修、合并与收尾 | 大段体力实现（我做完就没精力验收了） |
 
 > **换谁当工头都成立**（见 README「换工头」）：手册里的「我」就是读它的那个 AI，工头职责（拆活/验收/合并）跟着人走。被换下来的那家降格为工人——Claude 降下来时定位是「疑难杂症专家」（病根诊断、方案取舍、别人啃不动的硬骨头），用下面的 `claude -p` 模板派。
 > **谁当工头，谁就自带光杆司令能力**：这些 CLI 全都有一次性非交互模式，所以工头永远至少有一个工人可用——它自己。
+
+> 🔴 **Tao 2026-08-28 定：本项目默认优先派 Grok（Cursor CLI）**。除非这张卡明显更适合别人
+> （如需要大段设计取舍 → Codex；需要换个脑子的第二轮 bug 轮转 → 别的品牌），否则第一选择就是 Grok。
+> opencode(GLM) 曾于 2026-08-28 一度降为备选：同日两次卡死（一次启动拉模型清单超时吊住，一次连三个字的问候都九十秒无响应）。
+> **同日查明并已恢复**：「启动就吊住」这一类根本不是它的锅，是派活命令没关输入口——加上 `< /dev/null`（见下面调用模板第 ④ 条）后同一条命令从 5 分钟不动变成 18 秒干完，连跑三次稳定复现。**opencode 恢复为正常工人**，中文语境的活、体力活、bug 轮转换脑子人选都可以正常派给它，不必再当备胎。
 
 **分派口诀**：
 - 能写清"改哪个文件哪一行、改成什么样"的 → Grok；
@@ -146,8 +151,10 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 
 ## 二、调用模板
 
-**每个模板不管什么系统，都必须做到这五件事**（记住这五件事，比记住某一行命令重要）：
-① 真的进到样板间目录里；② 用该 CLI 的一次性非交互模式；③ 把任务书喂给它；④ 输出落盘到 scratchpad；⑤ 报出成没成（退出码）。
+**每个模板不管什么系统，都必须做到这六件事**（记住这六件事，比记住某一行命令重要）：
+① 真的进到样板间目录里；② 用该 CLI 的一次性非交互模式；③ 把任务书喂给它；④ **把没用到的输入口关掉（`< /dev/null`）**；⑤ 输出落盘到 scratchpad；⑥ 报出成没成（退出码）。
+
+🔴 **第 ④ 条是 2026-08-28 实测出来的坑，别省**：工头如果是 Claude Code，派活是走它的 Bash 工具跑的，而这个工具留给子进程的输入口**是一根永远不会关闭的管子**。很多 CLI（opencode 实测中招）启动时会先探一眼输入口有没有东西喂进来——在真人终端里那是键盘，它一看就知道没有、直接往下走；在 Bash 工具里它却会一直等那根管子给个"到此为止"的信号，而这个信号永远不来，于是进程活着、不报错、输出文件 0 字节，一直吊到超时。**表现和网络卡死一模一样，但原因完全不同**：分辨方法是看它自己的日志，网络卡死会紧跟一条 models.dev 超时的 ERROR，输入口卡死则是停在 `init` 后什么都没有。加一句 `< /dev/null` 等于当场告诉它"没人给你喂东西"，就正常了。任务书本来就是用 `< 任务书` 或 `"$(cat 任务书)"` 喂的，关掉不影响。同一条命令实测：不加 → 5 分钟不动；加了 → 18 秒干完。
 
 **方言对照（bash → PowerShell）**：
 
@@ -156,6 +163,7 @@ Get-Alias; if (Test-Path $PROFILE) { Select-String -Path $PROFILE -Pattern 'Set-
 | 进目录 | `cd "$WT"` | `Set-Location $WT` |
 | 把任务书喂进去 | `cmd < file` | `Get-Content -Raw file \| cmd`（PowerShell **没有** `<` 这个写法） |
 | 把任务书当参数传 | `"$(cat file)"` | `(Get-Content -Raw file)` |
+| 关掉没用的输入口 | `< /dev/null` | `$null \| cmd ...`（PowerShell 没有 `<`） |
 | 输出连错误一起落盘 | `> out.txt 2>&1` | `> out.txt 2>&1`（一样） |
 | 看成没成 | `echo "exit=$?"` | `echo "exit=$LASTEXITCODE"` |
 | 限时 | ❌ 别用 `timeout` | ❌ 更别用（Windows 上同名命令是"干等"） |
@@ -186,7 +194,7 @@ echo "exit=$LASTEXITCODE"
 # macOS / Linux
 cd "$WT"                                   # 必须真的 cd 进去
 kimi -p "$(cat "<scratchpad>/task-<slug>.md")" -m kimi-code/k3 \
-  --output-format text > "<scratchpad>/kimi-<slug>.out.txt" 2>&1
+  --output-format text < /dev/null > "<scratchpad>/kimi-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
 ```powershell
@@ -207,7 +215,7 @@ echo "exit=$LASTEXITCODE"
 # macOS / Linux
 cd "$WT"
 grok -p "$(cat '<scratchpad>/task-<slug>.md')" --always-approve \
-  > "<scratchpad>/grokcli-<slug>.out.txt" 2>&1
+  < /dev/null > "<scratchpad>/grokcli-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
 ```powershell
@@ -221,24 +229,45 @@ echo "exit=$LASTEXITCODE"
 - 另有 `grok agent` 子命令（无 UI headless 跑），需要机读输出时配 `--output-format`。
 - **打回重做**：`grok -c -p "<补充要求>"`（续当前目录上一轮会话）。
 - 🔴 **别拿它当"换个脑子"用**：它和 Cursor-Grok 是同一家模型，bug 卡轮转要换到别的品牌才有意义。
+- ⚠️ **`grok models` 会假报「You are not authenticated」**（2026-08-25 实测）：这个子命令读不到登录态，
+  但 `grok -p` 本身是登录好的、能正常干活。**别拿 `grok models` 的输出判断它有没有登录**——
+  看 `~/.grok/auth.json` 在不在、或者直接跑一次冒烟建文件。
+- 选模型与档位：`-m grok-4.6 --reasoning-effort high`（`--effort` 是它的别名）。可用模型只有
+  `grok-4.6`（默认）和 `grok-4.5`，别照搬 Cursor 那套带档位后缀的模型名。
 
-### opencode（`opencode run`）— 冒烟通过 2026-08-12
+### opencode（`opencode run`）— 冒烟通过 2026-08-12，固定模型档位后复测通过 2026-08-26
 ```bash
 # macOS / Linux
 cd "$WT"
-opencode run "$(cat '<scratchpad>/task-<slug>.md')" \
+opencode run -m opencode-go/glm-5.3-flash --variant max --auto \
+  "$(cat '<scratchpad>/task-<slug>.md')" \
+  < /dev/null \
   > "<scratchpad>/opencode-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
 ```powershell
 # Windows PowerShell
 Set-Location $WT
-opencode run (Get-Content -Raw "<scratchpad>/task-<slug>.md") `
+$null | opencode run -m opencode-go/glm-5.3-flash --variant max --auto `
+  (Get-Content -Raw "<scratchpad>/task-<slug>.md") `
   > "<scratchpad>/opencode-<slug>.out.txt" 2>&1
 echo "exit=$LASTEXITCODE"
 ```
-- 冒烟实测：`run` 一次性模式**默认就能写文件**，没弹权限。
-- 它背后接哪家模型由老板在 opencode 里配（`opencode models` 可查）——**派活前先确认当前模型是谁**，否则"表现忽好忽坏"根本没法归因。
+- 🔴 **派活必须显式带 `-m opencode-go/glm-5.3-flash --variant max`**（Tao 2026-08-26 定）。opencode 只是个壳，不写死模型就跟着老板上次在界面里选的走，"表现忽好忽坏"根本没法归因。`--variant` 是它的推理档位开关，glm-5.3-flash 支持 `low / high / max`，我们固定用 `max`。
+- ⚠️ **写错的模型名 / 档位名它不报错，是默默忽略**（实测 `--variant zzzbogus` 照跑不误）。所以拼完命令自己核一眼字符串，别指望它拦你。要查有哪些模型：`opencode models`。
+- `--auto` = 自动放行工具权限。工人是在一次性隔离样板间里干活，不加它可能卡在询问上干等；别在正式项目目录裸跑。
+- 冒烟实测：`run` 一次性模式能正常建文件、能正常收任务书。
+- 🔴 **会在启动阶段静默吊死**（2026-08-27 实测）：`opencode run` 启动时要去拉 models.dev 的模型清单，
+  这一步联网超时后它**既不退出也不继续**，表现是「进程活着、CPU 约 1%、输出文件 0 字节、35 分钟一个文件没动」。
+  **即使已经用 `-m` 显式指定了模型，这个拉取仍在启动路径上**，指定模型救不了。
+  判定与排查：读 `~/.local/share/opencode/log/opencode.log`，按 `run=<id>` 分组看——
+  正常的 run 有 `loop / stream / step=N` 一路往下；卡住的 run 停在 `init` 附近，
+  紧跟一条 `ERROR "Failed to fetch models.dev" cause=TimeoutError`，之后再无日志。
+  处置：直接 `pkill -f "opencode run"` 停掉，换人或工头自己接手；网络不稳时别把关键路径上的卡派给它。
+- 🔴 **同样是「停在 init 一动不动」，还有第二个完全不同的病因，别混着治**（2026-08-28 实测复现并已修）：
+  日志里停在 `init` 之后**紧跟 models.dev 超时 ERROR** = 网络病，按上一条处置；
+  停在 `init` 之后**一条日志都没有** = 输入口没关的病，加 `< /dev/null` 就好（见本章开头第 ④ 条）。
+  两者在外面看是同一副样子（进程活着、输出 0 字节），只有翻日志才分得开。**先加 `< /dev/null` 排除掉后者，再去怀疑网络。**
 
 ### Qoder CN（`qoderclicn -p`）— 冒烟通过 2026-08-19
 ```bash
@@ -246,7 +275,7 @@ echo "exit=$LASTEXITCODE"
 cd "$WT"                                   # 必须真的 cd 进去
 qoderclicn -p "$(cat '<scratchpad>/task-<slug>.md')" -m Qwen3.8-Max \
   --permission-mode bypass_permissions -o text \
-  > "<scratchpad>/qoder-<slug>.out.txt" 2>&1
+  < /dev/null > "<scratchpad>/qoder-<slug>.out.txt" 2>&1
 echo "exit=$?"
 ```
 ```powershell
@@ -322,7 +351,8 @@ echo "exit=$LASTEXITCODE"
 | Kimi | 上面的 `kimi -p` 模板 |
 | Cursor CLI | 上面的 `cursor-agent -p` 模板 |
 | Qoder CN | 上面的 `qoderclicn -p` 模板 |
-| 其他（opencode 等） | **现场自证**：跑 `--help` 找它的一次性模式（常见是 `run` / `-p` / `--print` / `exec`），按五件事拼好，**跑一次冒烟测试**通过才用 |
+| opencode | 上面的 `opencode run` 模板（记得带 `-m opencode-go/glm-5.3-flash --variant max` **和 `< /dev/null`**） |
+| 其他 | **现场自证**：跑 `--help` 找它的一次性模式（常见是 `run` / `-p` / `--print` / `exec`），按五件事拼好，**跑一次冒烟测试**通过才用 |
 
 **光杆模式下必须守住的两条**（否则这个模式就是自欺欺人）：
 - 🔴 **验收一点不放水**：还是开样板间、还是只认 `git diff` + 真跑测试 + 真实运行。"是我自己写的所以我知道对"是最典型的翻车理由。
@@ -346,6 +376,10 @@ echo "exit=$LASTEXITCODE"
 **工头自己在验收时最容易犯的一条（2026-08-20 实测踩到）：**
 - 🔴 **做"故意打死实现看用例会不会红"的反证之前，先在样板间里 commit 一次**。工人交的活是**未提交状态**，反证完用 `git checkout HEAD -- <file>` 还原，还原的是**改动前的原文**——一条命令把工人刚写的实现整个抹掉（本次靠上下文里存着完整文件才重建回来）。先提交，反证后再 checkout 才安全；或者破坏前先 `cp` 一份到 scratchpad。
 
+**线上取证 / 发布（2026-08-20 现场踩出）：**
+- 🔴 **去线上产物里 grep 验"功能到底上没上"时，关键词必须挑字符串字面量**（用户可见文案、路由表、对象字面量的键），**别挑函数名或变量名**——生产构建会把它们压掉，扑空会被误读成"功能没上去"。
+- 🔴 **别人构建的产物不要直接拿去发布**，哪怕源码同一个 commit：实测同源码两次构建的 BUILD_ID 不同（产物不是逐字节可复现的）。要复用只能复用**有人真跑过全套验证的那一份**；省一次上传，不值得拿"发出去的东西没人验过"来换。
+
 **Codex：**
 - 🔴 绝不让它碰 git（它会自作主张做分支手术），见 SKILL 铁律。
 - 🔴 **大陆网络下从官方 npm 源装会卡死**（2026-08-20 Windows 实测：下 `@openai/codex-win32-x64` 二进制 10 分钟零进度）。换国内源 8 秒装完：
@@ -363,6 +397,13 @@ echo "exit=$LASTEXITCODE"
 
 **Grok CLI / opencode（首次冒烟共同观察，2026-08-12）：**
 - 两家都**读了工作区的规则文件**，回话时用老板的昵称、甚至照抄了"下一步"格式——**语气懂事不代表干得对**，一律以文件真实存在 + 内容正确为准（本次两家都真建了文件，通过）。
+
+**opencode（固定 GLM-5.3-Flash · 推理档 max，2026-08-26 复测通过）：**
+- 🔴 **模型名和推理档写错它不报错，默默按默认跑**：实测 `--variant zzzbogus` 照样正常出活，退出码 0。所以派活命令里的 `-m opencode-go/glm-5.3-flash --variant max` 要自己核一眼字符串，别指望它拦你——写错了只会表现为"这轮怎么感觉笨了点"，事后根本查不出来。
+- 模型全名带 `opencode-go/` 前缀，只写 `glm-5.3-flash` 找不到人。可用清单：`opencode models`。
+- 推理档只有 `low / high / max` 三挡（`opencode` 自带的模型元数据里写着），没有 `medium`、也没有 `xhigh`。
+- 非交互跑要带 `--auto` 放行工具权限，否则可能卡在询问上干等；只在一次性隔离样板间里用。
+- 这颗脑子是 GLM（智谱），和 Grok / Codex 不同源，可以当 bug 轮转的换脑子人选；但**如果 Qoder CN 也配成了 GLM，这两家互换就不算换脑子**。
 
 **Qoder CN（`qoderclicn`）— 冒烟通过 2026-08-19：**
 - 冒烟实测：空目录 + `-p` + `-m Qwen3.8-Max` + `bypass_permissions`，文件真实落地、内容准确、退出码 0。
